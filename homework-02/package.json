@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./server.js",
-    "dev": "nodemon ./server.js"
+    "dev": "nodemon ./server.js",
+    "eslint": "eslint ."
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -20,6 +21,9 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "eslint": "^8.46.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-prettier": "^5.0.0",
     "nodemon": "^3.0.1"
   }
 }
