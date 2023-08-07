@@ -4,3 +4,4 @@ exp/node_moduls
 .env
 .idea
 .vscode
+.DS_Store
