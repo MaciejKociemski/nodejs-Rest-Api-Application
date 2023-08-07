@@ -1,4 +1,6 @@
-node_moduls
+node_modules/
 exp/node_moduls
 
 .env
+.idea
+.vscode
