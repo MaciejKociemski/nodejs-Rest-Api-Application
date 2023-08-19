@@ -1,42 +1,41 @@
-import {Schema, model} from "mongoose";
+import { Schema, model } from "mongoose";
 
-
-const contact = new Schema({
-  name:
+const contact = new Schema(
   {
-    type: String,
-    minLength: 3,
-    maxLength: 20,
-    trim: true,
-    required: [true, "the 'name' fileds is required"]
+    name: {
+      type: String,
+      minLength: 3,
+      maxLength: 20,
+      trim: true,
+      required: [true, "the 'name' fileds is required"],
+    },
+    email: {
+      type: String,
+      trim: true,
+      required: [true, "the 'email' filed is required"],
+    },
+    phone: {
+      type: String,
+      minLength: 3,
+      maxLength: 16,
+      trim: true,
+      required: [true, "The 'phone' field is required"],
+    },
+    favorite: {
+      type: Boolean,
+      default: false,
+    },
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
-  email:
-  {
-    type: String,
-    trim: true,
-    required: [true, "the 'email' filed is required"]
-  },
-  phone:
-  {
-    type: String,
-    minLength: 3,
-    maxLength: 16,
-    trim: true,
-    required: [true, "The 'phone' field is required"],
-  },
-  favorite:
-  {
-
-    type: Boolean,
-    default: false,
-  },
-},
   {
     versionKey: false,
     timestamps: true,
   }
 );
 
-const Contact = model("Contact", contact);
+const Contact = model("Contact", contactSchema);
 
 export default Contact;
