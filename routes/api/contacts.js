@@ -1,7 +1,10 @@
 import express from "express";
+import jwtMiddleware from '../../middlewares/jwt';
 import ctrlContacts from "../controllers/contacts";
 
 const router = express.Router();
+
+router.use(jwtMiddleware);
 
 router.get("/", ctrlContacts.get);
 

@@ -1,8 +1,10 @@
 import service from "../../services/contacts.js";
+import authService from "../../services/auth.js";
 
-const get = async (_, res, next) => {
+const get = async (req, res, next) => {
   try {
-    const contacts = await service.getContacts();
+    const ownerId = req.user.userId;
+    const contacts = await service.getContacts(ownerId);
 
     res.json({
       status: 200,
@@ -11,6 +13,7 @@ const get = async (_, res, next) => {
         contacts,
       },
     });
+
   } catch (err) {
     console.error(err.message);
     next(err);
@@ -19,9 +22,10 @@ const get = async (_, res, next) => {
 
 const getById = async (req, res, next) => {
   const { id } = req.params;
+  const ownerId = req.user.userId;
 
   try {
-    const contact = await service.getContactById(id);
+    const contact = await service.getContactById(id,ownerId);
 
     if (!contact) {
       return res.status(404).json({
@@ -46,9 +50,10 @@ const getById = async (req, res, next) => {
 
 const create = async (req, res) => {
   const body = req.body;
+  const ownerId = req.user.userId;
 
   try {
-    const contact = await service.createContact(body);
+    const contact = await service.createContact({ ...body, owner: ownerId });
 
     res.status(201).json({
       status: 201,
