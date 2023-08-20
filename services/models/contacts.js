@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 
-const contact = new Schema(
+const contactSchema = new Schema(
   {
     name: {
       type: String,
@@ -24,10 +24,6 @@ const contact = new Schema(
     favorite: {
       type: Boolean,
       default: false,
-    },
-    owner: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
     },
   },
   {
