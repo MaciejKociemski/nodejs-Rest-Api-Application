@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bCrypt from "bcryptjs";
 import service from "../../services/users.js";
-// import { handleValidationError } from "../../utils/handleErrors.js";
+
 import {
   userRegisterSchema,
   userLoginSchema,
@@ -84,12 +84,10 @@ const login = async (req, res, next) => {
     const payload = {
       id: existingUser._id,
     };
-      
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-
      
     const user = await service.updateUser({ email }, { token });
 

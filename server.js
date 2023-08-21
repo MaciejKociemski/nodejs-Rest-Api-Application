@@ -13,7 +13,7 @@ const connection = mongoose.connect(DATABASE_URL, {
 connection
   .then(() => {
     app.listen(PORT, () =>
-      console.log(`Database connection successful on port ${PORT}`)
+      console.log(`MongoDB connection successful on port ${PORT}`)
     );
   })
   .catch((err) => {
