@@ -4,22 +4,22 @@ const contactSchema = new Schema(
   {
     name: {
       type: String,
-      minLength: 3,
-      maxLength: 20,
+      minlength: 3,
+      maxlength: 20,
       trim: true,
-      required: [true, "the 'name' fileds is required"],
+      required: [true, "Name is required"],
     },
     email: {
       type: String,
       trim: true,
-      required: [true, "the 'email' filed is required"],
+      required: [true, "Email is required"],
     },
     phone: {
       type: String,
-      minLength: 3,
-      maxLength: 16,
+      minlength: 3,
+      maxlength: 16,
       trim: true,
-      required: [true, "The 'phone' field is required"],
+      required: [true, "Phone is required"],
     },
     favorite: {
       type: Boolean,

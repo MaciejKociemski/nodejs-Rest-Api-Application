@@ -1,21 +1,19 @@
 import express from "express";
-import jwtMiddleware from '../../middlewares/jwt';
-import ctrlContacts from "../controllers/contacts";
+import auth from "./authorization.js";
+import contactsController from "../controllers/contacts.js";
 
 const router = express.Router();
 
-router.use(jwtMiddleware);
+router.get("/", auth, contactsController.get);
 
-router.get("/", ctrlContacts.get);
+router.get("/:id", auth, contactsController.getById);
 
-router.get("/:id", ctrlContacts.getById);
+router.post("/", auth, contactsController.create);
 
-router.post("/", ctrlContacts.create);
+router.delete("/:id", auth, contactsController.remove);
 
-router.delete("/:id", ctrlContacts.remove);
+router.put("/:id", auth, contactsController.update);
 
-router.put("/:id", ctrlContacts.update);
-
-router.patch("/:id/favorite", ctrlContacts.updateStatusContact);
+router.patch("/:id/favorite", auth, contactsController.updateFavorite);
 
 export default router;

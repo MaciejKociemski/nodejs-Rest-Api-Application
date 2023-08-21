@@ -1,58 +1,63 @@
-import Contact from "./models/contacts";
+import Contact from "./models/contacts.js";
 
-const getContacts = async () => {
+const getContacts = async (userId, { page = 1, limit = 20, favorite }) => {
   try {
-    return await Contact.find();
+    const query =
+      favorite === "true" || favorite === "false"
+        ? { owner: userId, favorite }
+        : { owner: userId };
+
+    return await Contact.find(query)
+      .sort({ name: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
   } catch (err) {
-    console.error("Error fetching contacts:", err.message);
-    throw err;
+    console.error(err.message);
   }
 };
 
-const getContactById = async (contactId) => {
+const getContactById = async (userId, id) => {
   try {
-    return await Contact.findById(contactId);
+    return await Contact.findOne({ owner: userId, _id: id }).lean();
   } catch (err) {
-    console.error("Error fetching contact by ID:", err.message);
-    throw err;
+    console.error(err.message);
   }
 };
 
-const createContact = async (contactData) => {
+const createContact = async (body) => {
   try {
-    return await Contact.create(contactData);
+    return await Contact.create(body);
   } catch (err) {
-    console.error("Error creating contact:", err.message);
-    throw err;
+    console.error(err.message);
   }
 };
 
-const updateContact = async (contactId, contactData) => {
+const removeContact = async (userId, id) => {
   try {
-    return await Contact.findByIdAndUpdate(contactId, contactData, {
+    return await Contact.findOneAndRemove({ owner: userId, _id: id }).lean();
+  } catch (err) {
+    console.error(err.message);
+  }
+};
+
+const updateContact = async (userId, id, body) => {
+  try {
+    return await Contact.findOneAndUpdate({ owner: userId, _id: id }, body, {
+      runValidators: true,
       new: true,
     });
   } catch (err) {
-    console.error("Error updating contact:", err.message);
-    throw err;
+    console.error(err.message);
   }
 };
 
-const removeContact = async (contactId) => {
-  try {
-    return await Contact.findByIdAndRemove(contactId);
-  } catch (err) {
-    console.error("Error removing contact:", err.message);
-    throw err;
-  }
-};
-
-const service = {
+const contactService = {
   getContacts,
   getContactById,
   createContact,
-  updateContact,
   removeContact,
+  updateContact,
 };
 
-export default service;
+export default contactService;
