@@ -1,38 +1,20 @@
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import User from "./models/users";
 
-const generateToken = (userId) => {
-  const payload = { userId };
-  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
-  return token;
-};
-
-const loginUser = async (email, password) => {
-  try {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      throw new Error("Invalid credentials");
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      throw new Error("Invalid credentials");
-    }
-
-    const token = generateToken(user._id);
-
-    return token;
-  } catch (error) {
-    throw error;
-  }
-};
-
 const authService = {
-  generateToken,
-  loginUser,
+  generateToken: (userId) => {
+    const payload = { userId };
+    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
+  },
+
+  hashPassword: async (password) => {
+    return await bcrypt.hash(password, 10);
+  },
+
+  comparePasswords: async (password, hashedPassword) => {
+    return await bcrypt.compare(password, hashedPassword);
+  },
 };
 
 export default authService;
