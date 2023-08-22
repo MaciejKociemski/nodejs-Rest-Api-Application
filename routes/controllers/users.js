@@ -13,7 +13,16 @@ const register = async (req, res, next) => {
   try {
     const { body } = req;
     const { username, email, password } = body;
-    await userRegisterSchema.validateAsync(body);
+    if (Object.keys(body).length) {
+      const { error } = userRegisterSchema.validate(body);
+      if (error) {
+        return res.status(400).json({
+          status: 400,
+          statusText: "Bad Request",
+          data: { message: error.message },
+        });
+      }
+    }
 
     const isUserExists = await service.getUserWithOrOperator([
       { username },
@@ -21,29 +30,22 @@ const register = async (req, res, next) => {
     ]);
 
     if (isUserExists) {
+      const conflictField =
+        isUserExists.username === username ? "Username" : "E-mail";
       return res.status(409).json({
         status: 409,
         statusText: "Conflict",
         data: {
-          message: `${
-            isUserExists.username === username
-              ? "Username"
-              : isUserExists.email === email
-              ? "E-mail"
-              : null
-          } is already in use`,
+          message: `${conflictField} is already in use`,
         },
       });
     }
 
     const user = await service.createUser(body);
     await user.validate();
-    user.set(
-      "password",
-      await bCrypt.hash(password, await bCrypt.genSalt(6)),
-      String
-    );
+    user.password = await bCrypt.hash(password, await bCrypt.genSalt(6));
     await user.save();
+
 
     res.status(201).json({
       status: 201,
@@ -66,8 +68,18 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
-    await userLoginSchema.validateAsync(req.body);
     const { email, password } = req.body;
+
+    if (Object.keys(req.body).length) {
+      const { error } = userLoginSchema.validate(req.body);
+      if (error) {
+        return res.status(400).json({
+          status: 400,
+          statusText: "Bad Request",
+          data: { message: error.message },
+        });
+      }
+    }
     const existingUser = await service.getUser({ email });
 
     if (
@@ -80,7 +92,6 @@ const login = async (req, res, next) => {
         data: { message: "Incorrect e-mail or password" },
       });
     }
-
     const payload = {
       id: existingUser._id,
     };
@@ -97,8 +108,8 @@ const login = async (req, res, next) => {
       data: {
         token,
         user: {
-          email: user.email,
-          subscription: user.subscription,
+          email: updatedUser.email,
+          subscription: updatedUser.subscription,
         },
       },
     });
