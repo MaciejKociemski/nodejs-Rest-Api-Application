@@ -7,6 +7,9 @@ const auth = (req, res, next) => {
       !user ||
       req.headers.authorization.split(" ")[1] !== user.token
     ) {
+//dodano do monitorowania tokena
+      console.log("Request Token:", req.headers.authorization.split(" ")[1]);
+
       return res.status(401).json({
         status: 401,
         statusText: "Unauthorized",

@@ -84,11 +84,16 @@ const login = async (req, res, next) => {
     const payload = {
       id: existingUser._id,
     };
+    //dodano console.log do zmonitorowania przepywu tokena
+    console.log("Payload:", payload);
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-     
+
+    //dodano console.log do zmonitorowania przepywu tokena
+      console.log("Generated Token:", token);
+      
     const user = await service.updateUser({ email }, { token });
 
     res.json({
