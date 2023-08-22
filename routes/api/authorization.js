@@ -7,8 +7,6 @@ const auth = (req, res, next) => {
       !user ||
       req.headers.authorization.split(" ")[1] !== user.token
     ) {
-
-
       return res.status(401).json({
         status: 401,
         statusText: "Unauthorized",
