@@ -1,6 +1,9 @@
 import jwt from "jsonwebtoken";
 import bCrypt from "bcryptjs";
 import service from "../../services/users.js";
+import gravatar from "gravatar";
+import jimp from "jimp";
+import path from "path";
 
 import {
   userRegisterSchema,
@@ -13,6 +16,7 @@ const register = async (req, res, next) => {
   try {
     const { body } = req;
     const { username, email, password } = body;
+
     if (Object.keys(body).length) {
       const { error } = userRegisterSchema.validate(body);
       if (error) {
@@ -23,6 +27,8 @@ const register = async (req, res, next) => {
         });
       }
     }
+
+    const avatarURL = gravatar.url(email, { s: "200", r: "pg", d: "mm" });
 
     const isUserExists = await service.getUserWithOrOperator([
       { username },
@@ -41,11 +47,10 @@ const register = async (req, res, next) => {
       });
     }
 
-    const user = await service.createUser(body);
+    const user = await service.createUser({ ...body, avatarURL });
     await user.validate();
     user.password = await bCrypt.hash(password, await bCrypt.genSalt(6));
     await user.save();
-
 
     res.status(201).json({
       status: 201,
@@ -54,6 +59,7 @@ const register = async (req, res, next) => {
         user: {
           email: user.email,
           subscription: user.subscription,
+          avatarURL: user.avatarURL,
         },
       },
     });
@@ -86,12 +92,15 @@ const login = async (req, res, next) => {
       !existingUser ||
       !(await bCrypt.compare(password, existingUser.password))
     ) {
+      console.log("Login failed for email:", email);
+
       return res.status(401).json({
         status: 401,
         statusText: "Unauthorized",
         data: { message: "Incorrect e-mail or password" },
       });
     }
+
     const payload = {
       id: existingUser._id,
     };
@@ -108,8 +117,8 @@ const login = async (req, res, next) => {
       data: {
         token,
         user: {
-          email: updatedUser.email,
-          subscription: updatedUser.subscription,
+          email: user.email,
+          subscription: user.subscription,
         },
       },
     });
@@ -183,6 +192,33 @@ const setSubscription = async (req, res, next) => {
     });
   }
 };
+const updateAvatar = async (req, res, next) => {
+  try {
+    const { user, file } = req;
+
+    const image = await jimp.read(file.path);
+    await image.cover(250, 250).write(`${file.destination}/${user._id}.jpg`);
+
+    const updatedUser = await service.updateUser(
+      { _id: user._id },
+      { avatarURL: `/avatars/${user._id}.jpg` }
+    );
+
+    res.json({
+      status: 200,
+      statusText: "OK",
+      data: {
+        avatarURL: updatedUser.avatarURL,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 400,
+      statusText: "Bad Request",
+      data: { message: err.message },
+    });
+  }
+};
 
 const usersController = {
   register,
@@ -190,6 +226,7 @@ const usersController = {
   logout,
   getCurrent,
   setSubscription,
+  updateAvatar,
 };
 
 export default usersController;

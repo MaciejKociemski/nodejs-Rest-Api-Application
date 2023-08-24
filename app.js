@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import morgan from "morgan";
 import cors from "cors";
 import "dotenv/config";
@@ -10,6 +11,7 @@ const app = express();
 
 const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 
+app.use("/avatars", express.static("./public/avatars"));
 app.use(morgan(formatsLogger));
 app.use(cors());
 app.use(express.json());
