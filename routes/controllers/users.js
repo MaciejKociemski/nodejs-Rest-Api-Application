@@ -76,10 +76,6 @@ const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-
-    console.log("Received login request for email:", email);
-    
-
     if (Object.keys(req.body).length) {
       const { error } = userLoginSchema.validate(req.body);
       if (error) {
@@ -96,8 +92,7 @@ const login = async (req, res, next) => {
       !existingUser ||
       !(await bCrypt.compare(password, existingUser.password))
     ) {
-
- console.log("Login failed for email:", email);
+      console.log("Login failed for email:", email);
 
       return res.status(401).json({
         status: 401,
@@ -105,9 +100,6 @@ const login = async (req, res, next) => {
         data: { message: "Incorrect e-mail or password" },
       });
     }
-
-console.log("Login successful for email:", email);
-
 
     const payload = {
       id: existingUser._id,
