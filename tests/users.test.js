@@ -2,68 +2,81 @@ import mongoose from "mongoose";
 import request from "supertest";
 import app from "../app.js";
 
+import User from "../services/models/users";
+import bCrypt from "bcryptjs";
+
 const DATABASE_URL = process.env.DATABASE_URL;
 
-const sampleLogin = async () => {
-  try {
-    const res = await request(app).post("/api/users/login").send({
-      email: "ToJesttest@test.com",
-      password: "Test12345678",
-    });
-
-    return res.body;
-  } catch (err) {
-    throw new Error(err);
-  }
+const dummyUser = {
+  _id: null,
+  email: "ToJesttest@test.com",
+  password: "Test12345678",
+  subscription: "starter",
 };
 
+// const sampleLogin = async () => {
+//   try {
+//     const res = await request(app).post("/api/users/login").send({
+//       email: "ToJesttest@test.com",
+//       password: "Test12345678",
+//     });
+
+//     return res.body;
+//   } catch (err) {
+//     throw new Error(err);
+//   }
+// };
+
 describe("user login", () => {
-  let res;
+	beforeAll(async () => {
+		await mongoose.connect(DATABASE_URL, {
+			useNewUrlParser: true,
+			useUnifiedTopology: true,
+		});
 
-  beforeAll(async () => {
-    try {
-      await mongoose.connect(DATABASE_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-    } catch (err) {
-      throw new Error(err);
-    }
-  });
+		await User.findOneAndDelete({ email: dummyUser.email });
+		const { _id } = new User({
+			email: dummyUser.email,
+			password: await bCrypt.hash(dummyUser.password, await bCrypt.genSalt(6)),
+			subscription: dummyUser.subscription,
+		}).save();
 
-  afterAll(async () => {
-    try {
-      await mongoose.disconnect();
-    } catch (err) {
-      throw new Error(err);
-    }
-  });
+		dummyUser._id = _id;
+	});
 
-  beforeEach(async () => {
-    res = await sampleLogin();
-  });
+	afterAll(async () => {
+		await User.findOneAndDelete({ email: dummyUser.email });
+		await mongoose.disconnect();
+	});
 
-  test("should return status 200 OK", () => {
-    const { status, statusText } = res;
-    expect(status).toBe(200);
-    expect(statusText).toBe("OK");
-  });
+	test("valid data should properly log the user in", async () => {
+		const { body: { status, data: { token, user } } } = await request(app).post("/api/users/login").send({
+			email: dummyUser.email,
+			password: dummyUser.password,
+		});
 
-  test("should return a token", () => {
-    const { token } = res.data;
-    expect(typeof token).toBe("string");
-    expect(token).toBeTruthy();
-  });
+		expect(status).toBe(200);
+		expect(user.email).toBe(dummyUser.email);
+		expect(user.subscription).toBe(dummyUser.subscription);
+		expect(typeof token).toBe("string");
+		expect(token).toBeTruthy();
+	});
 
-  test("should return a user object with valid email and subscription fields", () => {
-    const { user } = res.data;
+	test("invalid email should return 401", async () => {
+		const { body: { status } } = await request(app).post("/api/users/login").send({
+			email: 'wrongEmail@gmail.com',
+			password: dummyUser.password,
+		});
 
-    expect(user).toMatchObject({
-      email: expect.any(String),
-      subscription: expect.any(String),
-    });
+		expect(status).toBe(401);
+	});
 
-    expect(user.email).toBeTruthy();
-    expect(user.subscription).toBeTruthy();
-  });
+	test("broken email should return 400", async () => {
+		const { body: { status } } = await request(app).post("/api/users/login").send({
+			email: '123',
+			password: dummyUser.password,
+		});
+
+		expect(status).toBe(400);
+	});
 });

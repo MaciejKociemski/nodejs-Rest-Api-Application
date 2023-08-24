@@ -13,6 +13,4 @@ usersRouter.get("/current", auth, usersController.getCurrent);
 usersRouter.patch("/subscription", auth, usersController.setSubscription);
 usersRouter.patch("/avatars",auth,upload.single("avatar"),usersController.updateAvatar);
 
-usersRouter.patch("/subscription", auth, usersController.setSubscription);
-
 export default usersRouter;
