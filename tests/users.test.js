@@ -37,6 +37,7 @@ describe("user login", () => {
   });
 
   test("valid data should properly log the user in", async () => {
+    console.log("Dummy user before test:", dummyUser);
     const {
       body: {
         status,
