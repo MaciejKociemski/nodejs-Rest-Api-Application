@@ -123,6 +123,14 @@ const login = async (req, res, next) => {
       });
     }
 
+    if (!existingUser.verify) {
+      return res.status(401).json({
+        status: 401,
+        statusText: "Unauthorized",
+        data: { message: "User is not verifed" },
+      });
+    }
+
     const payload = {
       id: existingUser._id,
     };
