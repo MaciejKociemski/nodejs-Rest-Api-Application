@@ -9,7 +9,7 @@ const DATABASE_URL = process.env.DATABASE_URL;
 
 const dummyUser = {
   _id: null,
-  email: "ToJesttest@test.com",
+  email: "miloszNiepodobaMisieTo@test.com",
   password: "Test12345678",
   subscription: "starter",
 };
@@ -26,6 +26,9 @@ describe("user login", () => {
       email: dummyUser.email,
       password: await bCrypt.hash(dummyUser.password, await bCrypt.genSalt(6)),
       subscription: dummyUser.subscription,
+      verificationToken:
+        "e396080dfc04ed94a2a6d82c0089e7a59462cb011b264c4625dad06e4053f3e1",
+      verify: true,
     }).save();
 
     dummyUser._id = _id;
@@ -37,6 +40,7 @@ describe("user login", () => {
   });
 
   test("valid data should properly log the user in", async () => {
+    console.log("Dummy user before test:", dummyUser);
     const {
       body: {
         status,

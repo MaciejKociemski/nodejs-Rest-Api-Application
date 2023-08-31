@@ -4,13 +4,19 @@ import service from "../../services/users.js";
 import gravatar from "gravatar";
 import jimp from "jimp";
 import path from "path";
-
+import crypto from "crypto";
+import sendgrid from "@sendgrid/mail";
+import dotenv from "dotenv";
+dotenv.config();
+sendgrid.setApiKey(process.env.systemName);
 import {
   userRegisterSchema,
   userLoginSchema,
   userLogoutSchema,
   userSubSchema,
 } from "../../utils/validation.js";
+
+
 
 const register = async (req, res, next) => {
   try {
@@ -47,10 +53,26 @@ const register = async (req, res, next) => {
       });
     }
 
-    const user = await service.createUser({ ...body, avatarURL });
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const user = await service.createUser({
+      ...body,
+      avatarURL,
+      verificationToken,
+    });
     await user.validate();
     user.password = await bCrypt.hash(password, await bCrypt.genSalt(6));
     await user.save();
+
+    const verificationLink = `${process.env.BASE_URL}/api/users/verify/${verificationToken}`;
+    const message = {
+      to: user.email,
+      from: process.env.SENDGRID_EMAIL,
+      subject: "Email Verification",
+      html: `<p>Hello, please click the following link to verify your email: <a href="${verificationLink}">${verificationLink}</a></p>`,
+    };
+    await sendgrid.send(message);
+
+
 
     res.status(201).json({
       status: 201,
@@ -98,6 +120,14 @@ const login = async (req, res, next) => {
         status: 401,
         statusText: "Unauthorized",
         data: { message: "Incorrect e-mail or password" },
+      });
+    }
+
+    if (!existingUser.verify) {
+      return res.status(401).json({
+        status: 401,
+        statusText: "Unauthorized",
+        data: { message: "User is not verifed" },
       });
     }
 
@@ -219,6 +249,60 @@ const updateAvatar = async (req, res, next) => {
     });
   }
 };
+const resendVerificationEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        status: 400,
+        statusText: "Bad Request",
+        data: { message: "Missing required field: email" },
+      });
+    }
+
+    const existingUser = await service.getUser({ email });
+
+    if (!existingUser) {
+      return res.status(404).json({
+        status: 404,
+        statusText: "Not Found",
+        data: { message: "User not found" },
+      });
+    }
+
+    if (existingUser.verify) {
+      return res.status(400).json({
+        status: 400,
+        statusText: "Bad Request",
+        data: { message: "Verification has already been passed" },
+      });
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    await service.updateUser({ email }, { verificationToken });
+
+    const verificationLink = `${process.env.BASE_URL}/api/users/verify/${verificationToken}`;
+    const message = {
+      to: user.email,
+      from: process.env.SENDGRID_EMAIL,
+      subject: "Email Verification",
+      html: `<p>Hello, please click the following link to verify your email: <a href="${verificationLink}">${verificationLink}</a></p>`,
+    };
+    await sendgrid.send(message);
+
+    res.json({
+      status: 200,
+      statusText: "OK",
+      data: { message: "Verification email sent" },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 400,
+      statusText: "Bad Request",
+      data: { message: err.message },
+    });
+  }
+};
 
 const usersController = {
   register,
@@ -227,6 +311,7 @@ const usersController = {
   getCurrent,
   setSubscription,
   updateAvatar,
+  resendVerificationEmail,
 };
 
 export default usersController;
